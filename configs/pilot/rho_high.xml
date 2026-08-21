@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='utf-8'?>
+<santa xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="santa.xsd">
+
+    <replicates>3</replicates>
+
+    <simulation>
+        <genome>
+            <length>999</length>
+            <sequences>
+CCTCAGGTCACTCTTTGGCAACGACCCCTCGTCACAATAAAGATAGGGGGGCAACTAAAGGAAGCTCTATTAGATACAGGAGCAGATGATACAGTATTAGAAGAAATGAGTTTGCCAGGAAGATGGAAACCAAAAATGATAGGGGGAATTGGAGGTTTTATCAAAGTAAGACAGTATGATCAGATACTCATAGAAATCTGTGGACATAAAGCTATAGGTACAGTATTAGTAGGACCTACACCTGTCAACATAATTGGAAGAAATCTGTTGACTCAGATTGGTTGCACTTTAAATTTTCCCATTAGCCCTATTGAGACTGTACCAGTAAAATTAAAGCCAGGAATGGATGGCCCAAAAGTTAAACAATGGCCATTGACAGAAGAAAAAATAAAAGCATTAGTAGAAATTTGTACAGAGATGGAAAAGGAAGGGAAAATTTCAAAAATTGGGCCTGAAAATCCATACAATACTCCAGTATTTGCCATAAAGAAAAAAGACAGTACTAAATGGAGAAAATTAGTAGATTTCAGAGAACTTAATAAGAGAACTCAAGACTTCTGGGAAGTTCAATTAGGAATACCACATCCCGCAGGGTTAAAAAAGAAAAAATCAGTAACAGTACTGGATGTGGGTGATGCATATTTTTCAGTTCCCTTAGATGAAGACTTCAGGAAGTATACTGCATTTACCATACCTAGTATAAACAATGAGACACCAGGGATTAGATATCAGTACAATGTGCTTCCACAGGGATGGAAAGGATCACCAGCAATATTCCAAAGTAGCATGACAAAAATCTTAGAGCCTTTTAGAAAACAAAATCCAGACATAGTTATCTATCAATACATGGATGATTTGTATGTAGGATCTGACTTAGAAATAGGGCAGCATAGAACAAAAATAGAGGAGCTGAGACAACATCTGTTGAGGTGGGGACTTACCACACCAGACAAAAAACATCAGAAAGAACCTCCATTCCTTTGGATGGGTTATGAACTC
+            </sequences>
+            <feature>
+                <name>CDS</name>
+                <type>nucleotide</type>
+                <coordinates>1-999</coordinates>
+            </feature>
+        </genome>
+
+        <population>
+            <populationSize>1000</populationSize>
+            <inoculum>all</inoculum>
+        </population>
+
+        <fitnessFunction>
+            <neutralFitness>
+                <feature>CDS</feature>
+                <sites>1-999</sites>
+            </neutralFitness>
+        </fitnessFunction>
+
+        <mutator>
+            <nucleotideMutator>
+                <mutationRate>2.5000E-05</mutationRate>
+                <transitionBias>2.0</transitionBias>
+            </nucleotideMutator>
+        </mutator>
+
+        <replicator>
+            <recombinantReplicator><dualInfectionProbability>0.05</dualInfectionProbability><recombinationProbability>0.00144</recombinationProbability></recombinantReplicator></replicator>
+
+        <epoch>
+            <name>main</name>
+            <generationCount>2000</generationCount>
+        </epoch>
+
+        <samplingSchedule>
+            <sampler>
+                <atGeneration>2000</atGeneration>
+                <fileName>rho_high_%r.fasta</fileName>
+                <alignment>
+                    <sampleSize>100</sampleSize>
+                    <format>FASTA</format>
+                    <label>seq_%g_%s</label>
+                </alignment>
+            </sampler>
+            <sampler>
+                <atFrequency>100</atFrequency>
+                <fileName>rho_high_%r_stats.csv</fileName>
+                <statistics />
+            </sampler>
+        </samplingSchedule>
+    </simulation>
+</santa>

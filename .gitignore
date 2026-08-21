@@ -7,3 +7,7 @@ __pycache__/
 
 *.jar
 scratch/
+
+*.egg-info/
+build/
+dist/
