@@ -19,7 +19,7 @@ FEAT_TITLE = {
 }
 
 MU_ORDER = ["low", "mid", "high"]
-MU_COLOUR = {"low": "#E8873A", "mid": "#6B3FA0", "high": "#1F6FB2"}
+MU_COLOUR = {"low": "#E69F00", "mid": "#EC52A7", "high": "#56B4E9"}
 MU_LABEL = {
     "low": r"$\mu$ low",
     "mid": r"$\mu$ mid",
