@@ -20,9 +20,9 @@ RHO_ORDER = ["r0", "r1", "r2", "r3", "r4"]
 RHO_EFF = {"r0": 0, "r1": 0.005, "r2": 0.015, "r3": 0.030, "r4": 0.060}
 
 DIM_TITLE = {
-    0: "H$_0$ — connected components",
-    1: "H$_1$ — loops",
-    2: "H$_2$ — voids",
+    0: "H$_0$: connected components",
+    1: "H$_1$: loops",
+    2: "H$_2$: voids",
 }
 
 
@@ -149,7 +149,7 @@ def build_floor(s):
     ax.set_xticklabels(["H$_0$", "H$_1$", "H$_2$"])
     ax.set_ylabel("Mean Betti number")
     ax.set_title(
-        "The false-positive floor: features present with\nzero recombination (r0)",
+        "Features present with\nzero recombination (r0)",
         loc="left",
         fontsize=10.5,
     )
