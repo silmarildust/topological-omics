@@ -9,7 +9,7 @@ OUT_GRID = "figures/sanity_betti_grid.png"
 OUT_FLOOR = "figures/sanity_betti_floor.png"
 
 MU_ORDER = ["low", "mid", "high"]
-MU_COLOUR = {"low": "#E8873A", "mid": "#6B3FA0", "high": "#1F6FB2"}
+MU_COLOUR = {"low": "#E69F00", "mid": "#EC52A7", "high": "#56B4E9"}
 MU_LABEL = {
     "low": r"$\mu$ = 1.0$\times$10$^{-5}$",
     "mid": r"$\mu$ = 5.0$\times$10$^{-5}$",

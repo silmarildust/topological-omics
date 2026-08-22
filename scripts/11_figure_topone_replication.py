@@ -22,8 +22,7 @@ import matplotlib.pyplot as plt
 FEATURES = "data/processed/features.csv"
 FIGDIR = "figures"
 
-# TopONE's colour assignment.
-DIM_COLOUR = {0: "#1F3B73", 1: "#E8873A", 2: "#2A9D8F"}
+DIM_COLOUR = {0: "#E69F00", 1: "#EC52A7", 2: "#56B4E9"}
 DIM_LABEL = {0: "connected components", 1: "loops", 2: "voids"}
 
 MU_ORDER = ["low", "mid", "high"]
