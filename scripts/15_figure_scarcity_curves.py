@@ -107,8 +107,7 @@ def auc_curves():
     )
 
     fig.suptitle(
-        "Detection under sampling scarcity (no noise). "
-        "Open circles mark the sustained breakdown level; bands are 95% CI.",
+        "Detection under sampling scarcity (no noise) ",
         fontsize=11.5, y=1.03,
     )
     fig.tight_layout()
