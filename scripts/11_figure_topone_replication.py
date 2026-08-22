@@ -228,8 +228,7 @@ def R4(df, arm="abs"):
         fig,
         f"topone_R4{tag}_noise_x_rho_{arm}.png",
         f"Betti numbers vs increasing noise at varying recombination rates "
-        f"({'absolute' if arm == 'abs' else 'relative'} noise) — "
-        f"r0 is a control TopONE did not have",
+        f"({'absolute' if arm == 'abs' else 'relative'} noise)"
     )
 
 
