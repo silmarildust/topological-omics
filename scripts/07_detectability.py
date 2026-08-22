@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FEATURES = ROOT / "data" / "processed" / "features.csv"
 OUT = ROOT / "data" / "processed" / "detectability_h1.csv"
 FIGDIR = ROOT / "figures"
+OUT_BREAKDOWN = ROOT / "data" / "processed" / "detectability_breakdown.csv"
 
 # one test per cell of this grid: 3 mu x 31 noise x 10 ratio = 930
 KEYS = ["mu_level", "noise_arm", "noise_level", "sample_ratio"]
@@ -180,36 +181,80 @@ def plot(res):
             print(f"wrote {path}")
 
 
+# "up"   = higher factor is worse (noise). Passing region is at the low end.
+# "down" = lower factor is worse (scarcity). Passing region is at the high end.
+WORSE_DIRECTION = {"nsr": "up", "sample_ratio": "down"}
+ 
+ 
+def _breakdown(levels, passed, worse):
+    """Locate where a cell stops meeting the detectability criterion.
+ 
+    Returns (sustained_label, first_fail_label, n_recoveries).
+ 
+    sustained  the level at which failure begins and never reverses
+    first_fail the lowest-severity level that fails at all, recovery or not
+    n_recoveries  failing levels that later recover; > 0 means the curve
+                  bounces and the sustained figure is doing real work
+    """
+    levels = np.asarray(levels, dtype=float)
+    passed = np.asarray(passed, dtype=bool)
+    idx = np.where(passed)[0]
+ 
+    if len(idx) == 0:
+        return "fails at all levels", f"{levels[0 if worse == 'up' else -1]:.3f}", 0
+ 
+    if worse == "up":
+        # terminal failure block starts just after the last pass
+        if idx[-1] == len(levels) - 1:
+            sustained = f"none (>= {levels[-1]:.3f})"
+            cut = len(levels)
+        else:
+            cut = idx[-1] + 1
+            sustained = f"{levels[cut]:.3f}"
+        fails = np.where(~passed)[0]
+        first = f"{levels[fails[0]]:.3f}" if len(fails) else "none"
+        n_rec = int((fails < cut).sum())
+    else:
+        # initial failure block ends just before the first pass
+        if idx[0] == 0:
+            sustained = f"none (<= {levels[0]:.3f})"
+            cut = -1
+        else:
+            cut = idx[0] - 1
+            sustained = f"{levels[cut]:.3f}"
+        fails = np.where(~passed)[0]
+        first = f"{levels[fails[-1]]:.3f}" if len(fails) else "none"
+        n_rec = int((fails > cut).sum())
+ 
+    return sustained, first, n_rec
+ 
+ 
 def degradation(res, arm, factor, label):
-    # breakdown point + Spearman trend; trend is the powered test, not per-cell
+    """Breakdown point plus Spearman trend. The trend is the powered test."""
+    worse = WORSE_DIRECTION[factor]
     print(f"\ndegradation with {label}, Arm {arm.upper()}, full sample")
-    sub = res[(res.noise_arm == arm) & (res.sample_ratio == 1.0)] \
-        if factor == "nsr" else res[res.noise_level == 0]
-
+    print(f"  (severity increases {'upward' if worse == 'up' else 'downward'}; "
+          f"'sustained' = failure that never reverses)")
+ 
+    sub = (res[(res.noise_arm == arm) & (res.sample_ratio == 1.0)]
+           if factor == "nsr" else res[res.noise_level == 0])
+ 
     for (feat, mu), g in sub.groupby(["feature", "mu_level"]):
         g = g.sort_values(factor)
         if len(g) < 3:
             continue
-
-        # point estimate, not CI bound: +/-0.13 interval trips nothing
-        passed = (g.auc >= AUC_TARGET).to_numpy()
-        idx = np.where(passed)[0]
-        if len(idx) == 0:
-            bp = "fails at all levels"
-        elif idx[-1] == len(g) - 1:
-            # never failed within the grid -> censored, report as a bound
-            edge = g[factor].max() if factor == "nsr" else g[factor].min()
-            bp = f"none ({'>=' if factor == 'nsr' else '<='} {edge:.3f})"
-        else:
-            # noise degrades upward, scarcity downward
-            step = idx[-1] + 1 if factor == "nsr" else idx[0] - 1
-            bp = f"{g[factor].to_numpy()[step]:.3f}"
-
+ 
+        # point estimate, not CI bound: a +/-0.13 interval trips nothing
+        sustained, first, n_rec = _breakdown(
+            g[factor].to_numpy(), (g.auc >= AUC_TARGET).to_numpy(), worse
+        )
+ 
         rho, p = spearmanr(g[factor], g.auc)
-        print(f"  {feat:18s} mu={mu:5s}  breakdown={bp:22s} "
-              f"trend rho={rho:+.2f} p={p:.3f}  "
+        flag = f" [{n_rec} recovering dip{'s' if n_rec != 1 else ''}]" if n_rec else ""
+        print(f"  {feat:18s} mu={mu:5s}  sustained={sustained:22s} "
+              f"first_fail={first:8s} trend rho={rho:+.2f} p={p:.3f}  "
               f"AUC {g.auc.iloc[0]:.2f}->{g.auc.iloc[-1]:.2f} "
-              f"(+/-{g.auc_se.mean():.2f})")
+              f"(+/-{g.auc_se.mean():.2f}){flag}")
 
 
 def summarize(res):
@@ -241,6 +286,35 @@ def summarize(res):
     degradation(res, "rel", "nsr", "noise")
     degradation(res, "abs", "sample_ratio", "scarcity")
 
+def breakdown_table(res, out_path): 
+    rows = []
+    for factor, arm, label in [("nsr", "rel", "noise"),
+                               ("nsr", "abs", "noise"),
+                               ("sample_ratio", "abs", "scarcity")]:
+        worse = WORSE_DIRECTION[factor]
+        sub = (res[(res.noise_arm == arm) & (res.sample_ratio == 1.0)]
+               if factor == "nsr" else res[res.noise_level == 0])
+        for (feat, mu), g in sub.groupby(["feature", "mu_level"]):
+            g = g.sort_values(factor)
+            if len(g) < 3:
+                continue
+            sustained, first, n_rec = _breakdown(
+                g[factor].to_numpy(), (g.auc >= AUC_TARGET).to_numpy(), worse
+            )
+            rho, p = spearmanr(g[factor], g.auc)
+            rows.append(dict(
+                factor=label, noise_arm=arm, feature=feat, mu_level=mu,
+                sustained=sustained, first_fail=first, n_recoveries=n_rec,
+                trend_rho=rho, trend_p=p,
+                auc_best=g.auc.max(), auc_worst=g.auc.min(),
+                auc_se_mean=g.auc_se.mean(),
+                n_detectable=int(g.detectable.sum()), n_levels=len(g),
+            ))
+ 
+    df = pd.DataFrame(rows)
+    df.to_csv(out_path, index=False)
+    print(f"\nwrote {out_path}")
+    return df
 
 def main():
     df = pd.read_csv(FEATURES)
@@ -250,9 +324,9 @@ def main():
     res.to_csv(OUT, index=False)
 
     summarize(res)
+    breakdown_table(res, OUT_BREAKDOWN)   # <-- add
     plot(res)
     print(f"\nwritten -> {OUT}")
-
 
 if __name__ == "__main__":
     main()
